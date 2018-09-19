@@ -166,6 +166,11 @@ module.exports.initBook = async (bookId) => {
         }
     }
 
+    fetchChapterMpLimit(bookName, chapterList);
+    
+}
+
+const fetchChapterMpLimit = async (bookName, chapterList) => {
     // 抓取并保存章节
     let count = 0;
     async.mapLimit(chapterList, 5, async function (item, callback) {
@@ -213,3 +218,46 @@ module.exports.initBook = async (bookId) => {
         console.log(`biquge[book=${bookName}]`.magenta, `抓取完成! 抓取数量${count} 总章节数${chapterList.length}`.cyan);
     });
 }
+
+var intervalIds = {};
+
+module.exports.checkBookChapterUpdate = async (bookId) => {
+    let {chapterList, bookName, bookImage} = await module.exports.fetchBookData(bookId);
+
+    let dbLastChapter = await Chapter.find({
+        book_id: bookId,
+    }).sort({id: -1}).limit(1);
+
+    if (dbLastChapter && dbLastChapter.length) {
+        dbLastChapter = dbLastChapter[0];
+    }
+
+    let newChapters = chapterList && chapterList.filter(item => item.id > dbLastChapter.id) || [];
+
+    if (!newChapters.length) {
+        console.log(`biquge[book=${bookName}]`.magenta, `暂无章节更新！`.cyan );
+        return;
+    }
+
+    console.log(`biquge[book=${bookName}]`.magenta, `有新章节更新：${JSON.stringify(newChapters)}`.green );
+    fetchChapterMpLimit(bookName, newChapters);
+
+    intervalIds[bookId] && clearInterval(intervalIds[bookId]);
+    intervalIds[bookId] = setInterval(() => {
+        module.exports.checkBookChapterUpdate(bookId);
+    }, 10 * 60 * 1000);
+}
+
+const doCheckTask = async () => {
+    let books = await Book.find({});
+
+    for (var i = 0, len = books.length; i < len; i++) {
+        (function(bookId) {
+            setTimeout(() => {
+                module.exports.checkBookChapterUpdate(bookId);
+            }, 5 * 60 * 1000 * i);
+        })(books[i].id);
+    }
+}
+
+doCheckTask();

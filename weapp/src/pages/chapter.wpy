@@ -2,17 +2,18 @@
 </style>
 
 <template>
-<view class="{{ mode == 'day' ? 'pn': 'pn-night'}}">
+<view class="pn-{{mode}}">
   <view class="op-top">
-    <view class="icon {{ mode == 'day' ? 'icon-home': 'icon-home-w'}}" bindtap="toShelf"></view>
-    <view class="icon {{ mode == 'day' ? 'icon-night': 'icon-day'}}" bindtap="changeReadMode"></view>
+    <view class="icon icon-home-{{mode}}" bindtap="toShelf"></view>
+    <!-- <view class="icon icon-{{mode}}" bindtap="changeReadMode">换肤</view> -->
+    <view class="color" bindtap="changeReadMode">换肤</view>
     <view bindtap="changeToSmall">A-</view>
     <view bindtap="changeToLarge">A+</view>
   </view>
 
   <view class="title">{{ chapter.name }}</view>
   <view class="content ft-{{ftSize}}">
-    <view>{{ chapter.content }}</view>
+    <text>{{ chapter.content }}</text>
   </view>
   <view class="op-bottom">
     <view wx:if="{{ prevDisabled }}" class="btn-disable">上一章</view>
@@ -92,6 +93,8 @@ export default class Chapter extends wepy.page {
 
             if (res.record) {
                 this.chapter = res.record;
+
+                this.chapter.content = (this.chapter.content || '').replace(/\r\n/g, '\n');
                 this.$apply();
             }
 
@@ -193,6 +196,8 @@ export default class Chapter extends wepy.page {
         ft = 'md';
       } else if (ft == 'md') {
         ft = 'lg';
+      } else if (ft === 'lg') {
+        ft = 'bg';
       }
 
       this.ftSize = ft;
@@ -203,7 +208,9 @@ export default class Chapter extends wepy.page {
     changeToSmall() {
       // 字体变小
       let ft = this.ftSize;
-      if (ft == 'lg') {
+      if (ft === 'bg') {
+        ft = 'lg';
+      } else if (ft == 'lg') {
         ft = 'md';
       } else if (ft == 'md') {
         ft = 'sm';
@@ -219,7 +226,9 @@ export default class Chapter extends wepy.page {
       let mode = this.mode;
       if (mode == 'day') {
         mode = 'night';
-      } else {
+      } else if (mode === 'night') {
+        mode = 'qiuyehe';
+      } else if (mode === 'qiuyehe') {
         mode = 'day';
       }
       this.mode = mode;

@@ -29,7 +29,7 @@ page {
 
 .icon {
   font-family: 'FontAwesome' !important;
-  font-size: 28rpx;
+  font-size: 40rpx;
   color: black;
 }
 
@@ -41,14 +41,20 @@ page {
   content: "\f2c0";
 }
 
-.icon-home:after {
-  content: "\f015";
-}
-
-.icon-home-w:after {
+.icon-home-night:after {
   content: "\f015";
   color: white;
 }
+
+.icon-home-day:after {
+  content: "\f015";
+}
+
+.icon-home-qiuyehe:after {
+    content: "\f015";
+}
+
+.icon-home
 
 .icon-trash:after {
   content: "\f014";
@@ -61,11 +67,16 @@ page {
 
 .icon-day:after {
   content: "\f185";
-  color: white;
 }
 
 .icon-night:after {
   content: "\f186";
+  color: white;
+}
+
+.icon-qiuyehe:after {
+  content: "\f186";
+//   color: white;
 }
 
 .icon-down:after {
