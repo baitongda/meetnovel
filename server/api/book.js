@@ -1,7 +1,6 @@
 
-var path = require('path'),
-    htmlProcessor = require('../components/html-processor/html-processor'),
-    resProcessor = require('../components/res-processor/res-processor'),
+var resProcessor = require('../components/res-processor/res-processor'),
+    pageQuery = require('../components/page-query'),
     mongoose = require('mongoose');
 
 
@@ -10,15 +9,27 @@ const Chapter = mongoose.model('Chapter');
 
 
 /**
- * 添加书籍
+ * 书籍列表
  * @param  {[type]}   req  [description]
  * @param  {[type]}   res  [description]
  * @param  {Function} next [description]
  * @return {[type]}        [description]
  */
-var addBook = (req, res, next) => {
-    Book.add(req);
-    res.status(200).send('ok');
+var bookList = (req, res, next) => {
+    var page = req.body.page || 1;
+    var Book = mongoose.model('Book');
+    pageQuery(page, 30, Book, '', {}, {
+        create_time: 'desc'
+    }, function(error, $page){
+        if(error){
+            next(error);
+        }else{
+            resProcessor.jsonp(req, res, {
+                records: $page.results,
+                pageCount: $page.pageCount
+            })
+        }
+    });
 }
 
 
@@ -31,6 +42,6 @@ var addBook = (req, res, next) => {
  * ]
  */
 module.exports = [
-    // 新增书籍
-    ['POST', '/api/book/add', addBook]
+    // 书籍列表
+    ['POST', '/api/book/list', bookList]
 ];

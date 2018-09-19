@@ -42,6 +42,7 @@ module.exports.fetchBookData =  async (bookId) => {
         let status = await page.open(`https://www.qu.la/book/${bookId}/`);
         let chapterList = [];
         let bookName = '';
+        let bookImage = '';
         if(status === 'success'){
             chapterList = await page.evaluate(function() {
                 return $('#list dl dd').map(function() {
@@ -63,12 +64,17 @@ module.exports.fetchBookData =  async (bookId) => {
                 return $('#info h1').html();
             })
 
+            bookImage = await page.evaluate(function() {
+                return window.location.origin + $('#sidebar #fmimg img').attr('src');
+            })
+
             // console.log('chapterList:', chapterList);
         }
         instance.exit();
         return {
             chapterList,
             bookName,
+            bookImage
         }
         
 
@@ -117,7 +123,7 @@ module.exports.fetchChapterContent =  async (chapterInfo) => {
                     content: $("#content").html()
                 });
             })
-            if (result.title && result.content) {
+            if (result && result.title && result.content) {
                 chapter = {
                     id: chapterInfo.id,
                     bookId: chapterInfo.bookId,
@@ -140,13 +146,14 @@ module.exports.fetchChapterContent =  async (chapterInfo) => {
 }
 
 module.exports.initBook = async (bookId) => {
-    let {chapterList, bookName} = await module.exports.fetchBookData(bookId);
+    let {chapterList, bookName, bookImage} = await module.exports.fetchBookData(bookId);
 
     // 创建书籍
     try {
         await Book.add({
             name: bookName,
             id: bookId,
+            bookImage,
         });
     } catch (err) {
         
@@ -163,7 +170,19 @@ module.exports.initBook = async (bookId) => {
     let count = 0;
     async.mapLimit(chapterList, 5, async function (item, callback) {
         try {
+            let dbExistChapter = await Chapter.findOne({id: item.id});
+
+            if (dbExistChapter && dbExistChapter.id) {
+                console.log(`biquge[book=${bookName}]`.magenta, `章节${item.link}已抓取过，不重复保存`.gray);
+                return;
+            }
+
             let chapter = await module.exports.fetchChapterContent(item);
+
+            if (!chapter || !chapter.id) {
+                console.error(`biquge[book=${bookName}] 抓取章节${item.link}失败：获取dom失败`);
+                return;
+            }
 
             await Chapter.add(chapter);
             
@@ -191,6 +210,6 @@ module.exports.initBook = async (bookId) => {
         if (err) {
             console.error(err);
         }
-        console.log(`biquge[book=${bookName}]`.magenta, `抓取完成! 抓取数量${count} 总章节数${result.length}`.cyan);
+        console.log(`biquge[book=${bookName}]`.magenta, `抓取完成! 抓取数量${count} 总章节数${chapterList.length}`.cyan);
     });
 }

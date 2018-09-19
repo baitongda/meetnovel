@@ -57,27 +57,18 @@ export default (obj) => {
     }
 
     // 所有请求带上sid
-    let sid = getStorageSync('sid');
-    if (sid) {
-        obj.data.sid = sid;
-    }
-
-    // Todo 后续有多期时考虑是否去掉这里的campId逻辑
-    // 所有请求带上campId
-    if (!obj.data.campId) {
-        let campId = getStorageSync('campId');
-        if (campId) {
-            obj.data.campId = campId;
-        }
-    }
+    // let sid = getStorageSync('sid');
+    // if (sid) {
+    //     obj.data.sid = sid;
+    // }
 
     // 注入版本号标识给后端
     obj.data.clientVer = conf.clientVer;
-    obj.data.caller = 'shortVideo';
+    obj.data.caller = 'meetnovel';
 
     // 组装参数
-    let postData = wrapReqParams(obj.data, conf.apiKey);
-    obj.data = postData;
+    // let postData = wrapReqParams(obj.data, conf.apiKey);
+    // obj.data = postData;
 
     // 固定请求为POST方式
     obj.method = 'POST';

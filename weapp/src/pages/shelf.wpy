@@ -1,0 +1,93 @@
+<style lang="less" src='./shelf.less'>
+
+</style>
+
+<template>
+<!--shelf.wxml-->
+<view>
+  <view class="book-list">
+    <view class="book-item" wx:for="{{ books }}" wx:key="*this">
+      <text class="icon icon-bk-remove" bindtap="delBook" wx:if="{{ mode }}" data-book-id="{{ item.id }}"></text>
+      <image src="{{ item.book_image}}" class="book-image" bindtap="handleBookClick" data-book-id="{{ item.id }}" data-book-name="{{ item.name }}"></image>
+      <text>{{ item.name }}</text>
+    </view>
+  </view>
+</view>
+
+</template>
+
+<script>
+import wepy from 'wepy'
+import request from '../components/request'
+
+import Toast from '../components/toast'
+
+export default class Shelf extends wepy.page {
+    config = {
+        navigationBarTitleText: "我的书架",
+        navigationBarBackgroundColor: "#fff",
+        navigationBarTextStyle: "black",
+        backgroundColor: '#f8f8f8',
+    }
+
+    components = {
+        toast: Toast,
+    }
+
+    data = {
+        books: [],
+        mode: false,
+    }
+
+    onLoad(options){
+        this.fetchBookList();
+    }
+
+    async fetchBookList() {
+        wepy.showLoading({
+            title: '加载中',
+        });
+
+        try {
+            let res = await request({
+                url: '/api/book/list',
+                data: {
+                    page: 1,
+                }
+            });
+
+            wepy.hideLoading();
+
+            if (res.records) {
+                this.books = res.records;
+                this.$apply();
+            }
+
+            return res.records;
+        } catch(error) {
+            wepy.hideLoading();
+            console.error(error);
+            return [];
+        }
+    }
+
+    toast(title) {
+        return this.$invoke('toast', 'show', {
+            title: title,
+        });
+    }
+
+    methods = {
+        handleBookClick(e) {
+            let bookId = e.target.dataset.bookId;
+            let bookName = e.target.dataset.bookName;
+
+            this.$navigate('/pages/chapter-list', {
+                id: bookId,
+                name: bookName,
+            });
+       }
+    }
+}
+
+</script>

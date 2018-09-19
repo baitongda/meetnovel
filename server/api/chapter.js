@@ -1,7 +1,6 @@
 
-var path = require('path'),
-    htmlProcessor = require('../components/html-processor/html-processor'),
-    resProcessor = require('../components/res-processor/res-processor'),
+var resProcessor = require('../components/res-processor/res-processor'),
+    pageQuery = require('../components/page-query'),
     mongoose = require('mongoose');
 
 
@@ -9,15 +8,86 @@ const Book = mongoose.model('Book');
 const Chapter = mongoose.model('Chapter');
 
 /**
- * 收集pv日志
+ * 章节列表分页查询
  * @param  {[type]}   req  [description]
  * @param  {[type]}   res  [description]
  * @param  {Function} next [description]
  * @return {[type]}        [description]
  */
-var addChapter = (req, res, next) => {
-    Chapter.add(req);
-    res.status(200).send('ok');
+var chapterList = (req, res, next) => {
+    var page = req.body.page || 1;
+    var sortMode = req.body.sortMode || 'desc';
+    var limit = req.body.limit || 30;
+    var bookId = req.body.bookId;
+
+    var Chapter = mongoose.model('Chapter');
+
+    pageQuery(page, limit, Chapter, '', {
+        book_id: bookId,
+    }, {
+        id: sortMode,
+    }, function(error, $page){
+        if(error){
+            next(error);
+        }else{
+            resProcessor.jsonp(req, res, {
+                records: $page.results,
+                pageCount: $page.pageCount
+            })
+        }
+    });
+}
+
+/**
+ * 章节详情查询
+ * @param  {[type]}   req  [description]
+ * @param  {[type]}   res  [description]
+ * @param  {Function} next [description]
+ * @return {[type]}        [description]
+ */
+var chapterInfo = async (req, res, next) => {
+    try {
+        let chapter = await Chapter.findOne({
+            id: req.body.id,
+        });
+
+        resProcessor.jsonp(req, res, {
+            record: chapter,
+        })
+    } catch(err) {
+        next(error);
+    }
+}
+
+var chapterNext = async (req, res, next) => {
+    try {
+        let chapter = await Chapter.find({
+            id: { '$gt': req.body.id },
+            book_id: req.body.bookId,
+        }).sort({id: 1}).limit(1);
+
+        resProcessor.jsonp(req, res, {
+            record: chapter && chapter.length && chapter[0] || null,
+        })
+    } catch(err) {
+        next(error);
+    }
+}
+
+
+var chapterPrev = async (req, res, next) => {
+    try {
+        let chapter = await Chapter.find({
+            id: { '$lt': req.body.id },
+            book_id: req.body.bookId,
+        }).sort({id: -1}).limit(1);
+
+        resProcessor.jsonp(req, res, {
+            record: chapter && chapter.length && chapter[0] || null,
+        })
+    } catch(err) {
+        next(error);
+    }
 }
 
 
@@ -30,6 +100,14 @@ var addChapter = (req, res, next) => {
  * ]
  */
 module.exports = [
-    // 收集pv日志
-    ['POST', '/api/chapter/add', addChapter],
+    // 章节列表分页查询
+    ['POST', '/api/chapter/list', chapterList],
+    // 章节详情查询
+    ['POST', '/api/chapter/info', chapterInfo],
+
+    // 获取下一章节
+    ['POST', '/api/chapter/next', chapterNext],
+
+    // 获取上一章节
+    ['POST', '/api/chapter/prev', chapterPrev],
 ];

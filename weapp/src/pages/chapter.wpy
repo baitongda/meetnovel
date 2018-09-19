@@ -1,0 +1,228 @@
+<style lang="less" src='./chapter.less'>
+</style>
+
+<template>
+<view class="{{ mode == 'day' ? 'pn': 'pn-night'}}">
+  <view class="op-top">
+    <view class="icon {{ mode == 'day' ? 'icon-home': 'icon-home-w'}}" bindtap="toShelf"></view>
+    <view class="icon {{ mode == 'day' ? 'icon-night': 'icon-day'}}" bindtap="changeReadMode"></view>
+    <view bindtap="changeToSmall">A-</view>
+    <view bindtap="changeToLarge">A+</view>
+  </view>
+
+  <view class="title">{{ chapter.name }}</view>
+  <view class="content ft-{{ftSize}}">
+    <view>{{ chapter.content }}</view>
+  </view>
+  <view class="op-bottom">
+    <view wx:if="{{ prevDisabled }}" class="btn-disable">上一章</view>
+    <view bindtap="prevChapter" wx:else>上一章</view>
+    <view bindtap="toMulu">目录</view>
+    <view wx:if="{{ nextDisabled }}" class="btn-disable">下一章</view>
+    <view bindtap="nextChapter" wx:else>下一章</view>
+  </view>
+  <toast />
+</view>
+</template>
+
+<script>
+import wepy from 'wepy';
+import request from '../components/request';
+import Toast from '../components/toast';
+import { getStorageSync, setStorageSync } from '../components/storage';
+
+export default class Chapter extends wepy.page {
+  config = {
+    navigationBarTitleText: '',
+    navigationBarBackgroundColor: '#fff',
+    navigationBarTextStyle: 'black',
+    backgroundColor: '#f8f8f8'
+  };
+
+  components = {
+    toast: Toast
+  };
+
+  data = {
+    chapter: {},
+    chapterId: '',
+    bookName: '',
+    mode: 'day',
+    ftSize: 'sm', //sm md lg  小中大
+    prevDisabled: false,
+    nextDisabled: false,
+  };
+
+  onLoad(options) {
+
+    this.chapterId = options.id;
+    this.bookName = options.bookName;
+
+    var ft = getStorageSync('ftSize');
+    var mode = getStorageSync('mode');
+    this.ftSize = ft;
+    this.mode = mode;
+    this.$apply();
+
+    wepy.setNavigationBarTitle({
+        title: this.bookName
+    });
+
+    this.fetchChapterDetail();
+  }
+
+  async fetchChapterDetail() {
+        wepy.showLoading({
+            title: '加载中',
+        });
+
+        try {
+            let res = await request({
+                url: '/api/chapter/info',
+                data: {
+                    id: this.chapterId,
+                }
+            });
+
+            wepy.hideLoading();
+
+            if (res.record) {
+                this.chapter = res.record;
+                this.$apply();
+            }
+
+            return res.record;
+        } catch(error) {
+            wepy.hideLoading();
+            console.error(error);
+            return {};
+        }
+  }
+
+  toast(title) {
+    return this.$invoke('toast', 'show', {
+      title: title
+    });
+  }
+
+  toChapter(id) {
+    // 重定向到新的页面
+    // 打开新的章节页面
+    this.$redirect('chapter', {
+      id,
+      bookName: this.bookName
+    });
+  }
+
+  methods = {
+    toShelf() {
+      wepy.reLaunch({
+        url: '/pages/shelf'
+      });
+    },
+    toMulu() {
+      wepy.navigateBack({
+        delta: 1
+      });
+    },
+    async prevChapter() {
+        wepy.showLoading({
+            title: '加载中',
+        });
+
+        try {
+            let res = await request({
+                url: '/api/chapter/prev',
+                data: {
+                    id: this.chapterId,
+                    bookId: this.chapter.book_id,
+                }
+            });
+
+            wepy.hideLoading();
+
+            if (res.record) {
+                this.toChapter(res.record.id);
+            } else {
+                this.toast('无上一章内容！');
+                this.prevDisabled = true;
+                this.$apply();
+            }
+        } catch(error) {
+            wepy.hideLoading();
+            console.error(error);
+        }
+      
+    },
+    async nextChapter() {
+      wepy.showLoading({
+            title: '加载中',
+        });
+
+        try {
+            let res = await request({
+                url: '/api/chapter/next',
+                data: {
+                    id: this.chapterId,
+                    bookId: this.chapter.book_id,
+                }
+            });
+
+            wepy.hideLoading();
+
+            if (res.record) {
+                this.toChapter(res.record.id);
+            } else {
+                this.toast('无下一章内容！');
+                this.nextDisabled = true;
+                this.$apply();
+            }
+        } catch(error) {
+            wepy.hideLoading();
+            console.error(error);
+        }
+    },
+    changeToLarge() {
+      // 字体变大
+      let ft = this.ftSize;
+      if (ft == 'sm') {
+        ft = 'md';
+      } else if (ft == 'md') {
+        ft = 'lg';
+      }
+
+      this.ftSize = ft;
+      this.$apply();
+
+      setStorageSync('ftSize', ft);
+    },
+    changeToSmall() {
+      // 字体变小
+      let ft = this.ftSize;
+      if (ft == 'lg') {
+        ft = 'md';
+      } else if (ft == 'md') {
+        ft = 'sm';
+      }
+
+      this.ftSize = ft;
+      this.$apply();
+
+      setStorageSync('ftSize', ft);
+    },
+    changeReadMode() {
+      // 切换阅读模式
+      let mode = this.mode;
+      if (mode == 'day') {
+        mode = 'night';
+      } else {
+        mode = 'day';
+      }
+      this.mode = mode;
+      this.$apply();
+
+      setStorageSync('mode', mode);
+    }
+  };
+}
+</script>

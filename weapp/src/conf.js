@@ -4,7 +4,7 @@ module.exports = {
     clientVer: '1.0.0',
 
     // 接口前缀
-    apiPrefix: 'https://xxx.xx.xxxx.com',
+    apiPrefix: 'http://127.0.0.1:5005',
 
     // 接口签名key
     apiKey: '',

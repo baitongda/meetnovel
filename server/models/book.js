@@ -11,7 +11,8 @@ const Schema = mongoose.Schema;
 const BookSchema = new Schema({
   id: {type: String, default: '', trim: true, unique: true},
   name: { type: String, default: '', trim: true, unique: true},
-  create_time  : { type : Date, default : Date.now }
+  create_time  : { type : Date, default : Date.now },
+  book_image: {type: String, default: '', trim: true},
 });
 
 /**
@@ -28,6 +29,7 @@ BookSchema.statics.add = function(book) {
     var params = {
         id: book.id,
         name: book.name,
+        book_image: book.bookImage,
     }
     var book = new Book(params);
 

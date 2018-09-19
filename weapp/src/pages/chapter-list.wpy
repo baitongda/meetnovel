@@ -1,0 +1,190 @@
+<style lang="less" src='./chapter-list.less'>
+</style>
+
+<template>
+<!-- 目录 -->
+
+<view class="pn">
+  <view class="order-layout">
+    <view class="order-box">
+      <view style="color: #EE30A7">{{ bookName }}</view>
+      <view class="order-op">
+        <view bindtap="changeOrderMode" data-mode="asc" class="left-btn {{ sortMode == 'asc' ? 'active': ''}}">正序</view>
+        <view bindtap="changeOrderMode" data-mode="desc" class="right-btn {{ sortMode == 'desc' ? 'active': ''}}">倒序</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="mulu-layout">
+    <view wx:for="{{ chapters }}" wx:key="*this">
+      <view class="chapter" bindtap="look" data-chapter-id="{{ item.id }}">{{ item.name }}</view>
+    </view>
+  </view>
+
+  <view class="page-layout">
+    <view class="page-box">
+      <view class="btn btn-disable" wx:if="{{ page == 1}}">上一页</view>
+      <view class="btn" bindtap="prevPage" wx:else>上一页</view>
+      <picker bindchange="changePage" value="{{ pageIndex }}" range="{{ pages }}" class="btn">
+        <view class="picker">
+         第{{ pages[pageIndex] }}页
+         <text class="icon icon-up" style="margin-left: 10rpx;"></text>
+        </view>
+      </picker>
+      <view class="btn btn-disable" wx:if="{{ page == lastPage }}">下一页</view>
+      <view class="btn" bindtap="nextPage" wx:else>下一页</view>
+    </view>
+  </view>
+</view>
+
+</template>
+
+<script>
+import wepy from 'wepy'
+import request from '../components/request'
+
+import Toast from '../components/toast'
+
+export default class ChapterList extends wepy.page {
+    config = {
+        navigationBarTitleText: "章节列表",
+        navigationBarBackgroundColor: "#fff",
+        navigationBarTextStyle: "black",
+        backgroundColor: '#f8f8f8',
+    }
+
+    components = {
+        toast: Toast,
+    }
+
+    data = {
+        chapters: [], // 当前页面获取的章节数
+        page: 1,  // 当前页码
+        limit: 30,  // 当前页面包含章节数
+        bookId: '',   // 小说id
+        bookName: '', // 小说名称
+        sortMode: 'desc', // 阅读模式 asc: 正序, desc:倒序
+        pages: ['1'],   // 页码数组
+        pageIndex: 0,  // 页码下标
+        lastPage: 1, // 最后一页 页码 默认为1
+    }
+
+    onLoad(options){
+        this.bookId = options.id;
+        this.bookName = options.name;
+        this.$apply();
+
+        this.fetchChapterList();
+    }
+
+    async fetchChapterList() {
+        wepy.showLoading({
+            title: '加载中',
+        });
+
+        try {
+            let res = await request({
+                url: '/api/chapter/list',
+                data: {
+                    page: this.page,
+                    sortMode: this.sortMode,
+                    limit: this.limit,
+                    bookId: this.bookId,
+                }
+            });
+
+            wepy.hideLoading();
+
+            if (res.records) {
+                this.chapters = res.records;
+
+                let pages = []
+                for (let i = 1; i < res.pageCount; i++){
+                    pages.push(i);
+                }
+
+                this.pages = pages;
+                this.lastPage = parseInt(res.pageCount);
+
+                this.$apply();
+            }
+
+            return res.records;
+        } catch(error) {
+            wepy.hideLoading();
+            console.error(error);
+            return [];
+        }
+    }
+
+    toast(title) {
+        return this.$invoke('toast', 'show', {
+            title: title,
+        });
+    }
+
+    methods = {
+      look: function (e){
+        let chapterId = e.currentTarget.dataset.chapterId;
+        
+        this.$navigate('/pages/chapter', {
+            id: chapterId,
+            bookName: this.bookName,
+        })
+      },
+      changeOrderMode: function(e){
+        // 选择阅读模式
+        let mode = e.currentTarget.dataset.mode;
+        this.sortMode = mode;
+        this.$apply();
+        this.fetchChapterList();
+      },
+      changePage: function(e) {
+        // 选择页面
+        let pages = this.pages;
+        let pageIndex = parseInt(e.detail.value);
+
+        this.pageIndex = pageIndex;
+        this.page = this.pages[pageIndex];
+        this.$apply();
+
+        this.fetchChapterList();
+      },
+      prevPage: function() {
+        // 上一页
+        
+        let page = this.page;
+        let pageIndex = this.pageIndex;
+
+        if (pageIndex > 0){
+          pageIndex = pageIndex - 1;
+          page = page - 1;
+        }
+
+        this.pageIndex = pageIndex;
+        this.page = parseInt(page);
+        this.$apply();
+
+        this.fetchChapterList();
+      },
+      nextPage: function(){
+        // 下一页
+        let page = this.page;
+        let pageIndex = this.pageIndex;
+        let lastPage = this.lastPage;
+
+        if (pageIndex < lastPage - 1){
+          pageIndex = pageIndex + 1;
+          page = page + 1;
+        }
+
+        this.pageIndex = pageIndex;
+        this.page = parseInt(page);
+        this.$apply();
+
+        this.fetchChapterList();
+      },
+    }
+}
+
+</script>
