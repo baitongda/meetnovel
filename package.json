@@ -1,0 +1,44 @@
+{
+  "name": "meetnovel",
+  "version": "1.0.0",
+  "description": "reading novel",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fisherw/meetnovel.git"
+  },
+  "author": "fisher <wangjiang.fly.1989@163.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/fisherw/meetnovel/issues"
+  },
+  "homepage": "https://github.com/fisherw/meetnovel#readme",
+  "dependencies": {
+    "async": "^2.6.1",
+    "body-parser": "^1.18.2",
+    "commander": "^2.12.2",
+    "connect-flash": "^0.1.1",
+    "connect-mongo": "^2.0.0",
+    "cookie-parser": "^1.4.3",
+    "cookie-session": "^2.0.0-beta.3",
+    "errorhandler": "^1.5.0",
+    "express": "^4.16.2",
+    "express-handlebars": "^3.0.0",
+    "express-session": "^1.15.6",
+    "lru-cache": "^4.1.3",
+    "moment": "^2.22.2",
+    "mongodb": "^3.0.1",
+    "mongoose": "^4.13.7",
+    "morgan": "^1.9.0",
+    "passport": "^0.4.0",
+    "passport-local": "^1.0.0",
+    "phantom": "^4.0.4",
+    "phantomjs": "^2.1.7+deprecated",
+    "underscore": "^1.8.3",
+    "view-helpers": "^0.1.5"
+  },
+  "devDependencies": {}
+}

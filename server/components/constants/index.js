@@ -1,0 +1,1 @@
+export { authorityList } from './authority'
