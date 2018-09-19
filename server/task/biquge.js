@@ -4,6 +4,7 @@ const async = require('async');
 const mongoose = require('mongoose');
 const Book = mongoose.model('Book');
 const Chapter = mongoose.model('Chapter');
+const colors = require('colors');
 
 
 phantom.cookiesEnabled = true;
@@ -35,8 +36,9 @@ module.exports.fetchBookData =  async (bookId) => {
         page.setting('userAgent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36');
         page.setting('javascriptEnabled', true);
         await page.on('onResourceRequested',function(requestData) {
-            console.info('Requesting',requestData.url);
+            // console.info('Requesting',requestData.url);
         });
+        console.log(`biquge[bookId=${bookId}] `.magenta, `正在抓取书籍https://www.qu.la/book/${bookId}/`.cyan);
         let status = await page.open(`https://www.qu.la/book/${bookId}/`);
         let chapterList = [];
         let bookName = '';
@@ -97,8 +99,9 @@ module.exports.fetchChapterContent =  async (chapterInfo) => {
         page.setting('userAgent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36');
         page.setting('javascriptEnabled', true);
         await page.on('onResourceRequested',function(requestData) {
-            console.info('Requesting',requestData.url);
+            // console.info('Requesting',requestData.url);
         });
+        console.log(`biquge[bookId=${chapterInfo.bookId}]`.magenta, `正在抓取章节${chapterInfo.link}/`.cyan)
         let status = await page.open(chapterInfo.link);
         var chapter;
         if(status === 'success'){
@@ -129,7 +132,7 @@ module.exports.fetchChapterContent =  async (chapterInfo) => {
         
 
     } catch(error) {
-        console.error('page error:', error);
+        console.error('biquge page error:', error);
         instance && instance.exit();
         client = null;
         return;
@@ -146,18 +149,26 @@ module.exports.initBook = async (bookId) => {
             id: bookId,
         });
     } catch (err) {
-        console.error(`add book[name=${bookName}] error:`, err);
-        return;
+        
+        // 如果是重复书籍则接着抓章节，否则为其它异常，结束抓取
+        if (err.code === 11000) {
+            console.log(`biquge[book=${bookName}]`.magenta, `书籍已抓取过，不重复保存`.gray);
+        } else {
+            console.error(`biquge[book=${bookName}] 保存书籍失败。 error:`, err);
+            return;
+        }
     }
 
-    // 爬取并保存章节
+    // 抓取并保存章节
     let count = 0;
     async.mapLimit(chapterList, 5, async function (item, callback) {
         try {
             let chapter = await module.exports.fetchChapterContent(item);
+
             await Chapter.add(chapter);
+            
             count++;
-            console.log(`[book=${bookName}] 抓取${item.link}完成，已完成${count}章节，总章节数${chapterList.length}`);
+            console.log(`biquge[book=${bookName}]`.magenta, `抓取${item.link}完成，已完成${count}章节，总章节数${chapterList.length}`.cyan);
 
             let delay = parseInt((Math.random() * 10000000) % 2000, 10);
             setTimeout(() => {
@@ -165,11 +176,21 @@ module.exports.initBook = async (bookId) => {
             }, delay);
 
         } catch (err) {
-            console.error(`[book=${bookName}] 抓取${item.link}失败：`, err);
+            // 如果是重复书籍则接着抓章节，否则为其它异常，结束抓取
+            if (err.code === 11000) {
+                console.log(`biquge[book=${bookName}]`.magenta, `章节${item.link}已抓取过，不重复保存`.gray);
+            } else {
+                console.error(`biquge[book=${bookName}] 抓取章节${item.link}失败：`, err, 'chapter:', chappter, 'item:', item);
+                return;
+            }
+            
             callback && callback(err);
         }
 
     }, function (err, result) {
-        console.log(`[book=${bookName}] 抓取完成! 抓取数量${count} 总章节数${result.length}`);
+        if (err) {
+            console.error(err);
+        }
+        console.log(`biquge[book=${bookName}]`.magenta, `抓取完成! 抓取数量${count} 总章节数${result.length}`.cyan);
     });
 }

@@ -1,0 +1,85 @@
+<style lang="less" src='./login.less'>
+
+</style>
+
+<template>
+
+<view class="page-login">
+    <!-- <view class="mock" @tap="showModal">
+        <image class="main" src="../static/img/mock-main.png" mode="widthFix"></image>
+        <image class="footer" src="../static/img/mock-footer.png" mode="widthFix"></image>
+    </view> -->
+
+    <view class="login-modal" wx:if="{{modalVisible}}">
+        <view class="mask" @tap="hideModal"/>
+        <view class="content">
+            <view class="welcome">欢迎登录遇见小说</view>
+            <button class="login-button" bindgetuserinfo="onGetUserinfo" open-type="getUserInfo" type="primary">登录</button>
+        </view>
+    </view>
+</view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import request from '../components/request'
+
+import Toast from '../components/toast'
+
+export default class Login extends wepy.page {
+    config = {
+        navigationBarTitleText: "遇见小说",
+        navigationBarBackgroundColor: "#fff",
+        navigationBarTextStyle: "black",
+        backgroundColor: '#f8f8f8',
+    }
+
+    components = {
+        toast: Toast,
+    }
+
+    data = {
+        page: '',
+        modalVisible: true,
+    }
+
+    onLoad(options){
+        this.page = decodeURIComponent(options.page || '');
+    }
+
+    toast(title) {
+        return this.$invoke('toast', 'show', {
+            title: title,
+        });
+    }
+
+    methods = {
+        onGetUserinfo(e) {
+            // 用户拒绝
+            if (e.detail && e.detail.errMsg && e.detail.errMsg === 'getUserInfo:fail auth deny') {
+                // this.toast('授权失败,请重新授权')
+                return
+            // 用户允许授权
+            } else if (e.detail && e.detail.errMsg && e.detail.errMsg === 'getUserInfo:ok') {
+                wepy.reLaunch({
+                    url: this.page || '/pages/video-list',
+                });
+
+                return
+            }
+
+        },
+
+        showModal(){
+            this.modalVisible = true
+            this.$apply()
+        },
+
+        hideModal(){
+            // this.modalVisible = false
+            // this.$apply()
+        },
+    }
+}
+
+</script>

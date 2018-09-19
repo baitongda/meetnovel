@@ -10,8 +10,8 @@ const Schema = mongoose.Schema;
 
 const ChapterSchema = new Schema({
   id: { type: String, default: '', trim: true, unique: true},
-  book_id: { type: String, default: '', trim: true},
   name: { type: String, default: '', trim: true, unique: true},
+  book_id: { type: String, default: '', trim: true},
   content: { type: String, default: '', trim: true},
   create_time  : { type : Date, default : Date.now }
 });
@@ -31,8 +31,8 @@ ChapterSchema.path('content').required(true, 'content cannot be blank');
 
 ChapterSchema.statics.add = function(chapter) {
     var params = {
-        id: chapter.id,
         book_id: chapter.bookId,
+        id: chapter.id,
         name: chapter.name,
         content: chapter.content,
     }
