@@ -60,8 +60,12 @@ export default class Chapter extends wepy.page {
 
     var ft = getStorageSync('ftSize');
     var mode = getStorageSync('mode');
-    this.ftSize = ft;
-    this.mode = mode;
+    if (ft) {
+        this.ftSize = ft;
+    }
+    if (mode) {
+        this.mode = mode;
+    }
     this.$apply();
 
     wepy.setNavigationBarTitle({
