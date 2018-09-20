@@ -57,17 +57,20 @@ export default class Shelf extends wepy.page {
     async onPullDownRefresh() {
         //   wepy.stopPullDownRefresh();
         wepy.showNavigationBarLoading()
-        await this.fetchBookList();
+        await this.fetchBookList(true);
 
         wepy.hideNavigationBarLoading();
 
         wepy.stopPullDownRefresh();
     }
 
-    async fetchBookList() {
-        wepy.showLoading({
-            title: '加载中',
-        });
+    async fetchBookList(isPullDown) {
+
+        if (!isPullDown) {
+            wepy.showLoading({
+                title: '加载中',
+            });
+        }
 
         try {
             let res = await request({
@@ -77,7 +80,9 @@ export default class Shelf extends wepy.page {
                 }
             });
 
-            wepy.hideLoading();
+            if (!isPullDown) {
+                wepy.hideLoading();
+            }
 
             if (res.records) {
                 this.books = res.records;
@@ -86,7 +91,9 @@ export default class Shelf extends wepy.page {
 
             return res.records;
         } catch(error) {
-            wepy.hideLoading();
+            if (!isPullDown) {
+                wepy.hideLoading();
+            }
             console.error(error);
             return [];
         }
