@@ -16,7 +16,7 @@ is_running=`ps aux | grep /data/yunmi/meetnovel_package/meetnovel | grep node | 
 
 if [[ "$is_running" -gt 0 ]]
 then
-  pm2 start server/server.js  --name meetnovel  --output $outlogPath --error $errorlogPath --merge-logs --log-date-format "YYYY-MM-DD HH:mm:ss Z" --  -p 2138 -h 0.0.0.0
+  pm2 reload server/server.js  --name meetnovel  --output $outlogPath --error $errorlogPath --merge-logs --log-date-format "YYYY-MM-DD HH:mm:ss Z" --  -p 2138 -h 0.0.0.0
 else
   pm2 start server/server.js  --name meetnovel --output $outlogPath --error $errorlogPath --merge-logs --log-date-format "YYYY-MM-DD HH:mm:ss Z" -- -p 2138 -h 0.0.0.0
 fi
