@@ -9,7 +9,7 @@ const Schema = mongoose.Schema;
  */
 
 const BookSchema = new Schema({
-  id: {type: String, default: '', trim: true, unique: true},
+  id: {type: Number, default: 0, trim: true, unique: true},
   name: { type: String, default: '', trim: true, unique: true},
   create_time  : { type : Date, default : Date.now },
   book_image: {type: String, default: '', trim: true},
@@ -27,7 +27,7 @@ BookSchema.path('name').required(true, 'name cannot be blank');
 
 BookSchema.statics.add = function(book) {
     var params = {
-        id: book.id,
+        id: parseInt(book.id),
         name: book.name,
         book_image: book.bookImage,
     }
