@@ -9,6 +9,8 @@ const colors = require('colors');
 
 phantom.cookiesEnabled = true;
 
+var beginingInitBookMap = {};
+
 /*
 替换br和&nbsp标签
 */
@@ -21,6 +23,20 @@ function puer(str) {
 	return str
 }
 
+function uniq(arr, keyName) {
+    let keyMap = {};
+    return arr.filter(item => {
+        let flag = false;
+        if (!keyMap[item[keyName]]) {
+            flag = true;
+        }
+
+        keyMap[item[keyName]] = true;
+
+        return flag;
+    })
+}
+
 /**
  * 抓取书籍所有文章列表
  * Url: 'https://www.qu.la/book/${bookId}'
@@ -30,7 +46,7 @@ module.exports.fetchBookData =  async (bookId) => {
     var instance = null;
 
     try {
-        instance = await phantom.create(['--ignore-ssl-errors=yes']);
+        instance = await phantom.create(['--ignore-ssl-errors=yes', '--load-images=no', '--disk-cache=true', '--max-disk-cache-size=1024000']);
         let page = await instance.createPage();
 
         page.setting('userAgent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36');
@@ -60,6 +76,8 @@ module.exports.fetchBookData =  async (bookId) => {
                 item.bookId = bookId
             });
 
+            chapterList = uniq(chapterList, 'id');
+
             bookName = await page.evaluate(function() {
                 return $('#info h1').html();
             })
@@ -79,7 +97,7 @@ module.exports.fetchBookData =  async (bookId) => {
         
 
     } catch(error) {
-        console.error('page error:', error);
+        console.error(`biquge[bookId=${bookId}] `.magenta, `抓取书籍失败。err:`, error);
         instance && instance.exit();
         client = null;
         return {};
@@ -99,7 +117,7 @@ module.exports.fetchChapterContent =  async (chapterInfo) => {
     var instance = null;
 
     try {
-        instance = await phantom.create(['--ignore-ssl-errors=yes']);
+        instance = await phantom.create(['--ignore-ssl-errors=yes', '--load-images=no', '--disk-cache=true', '--max-disk-cache-size=1024000']);
         let page = await instance.createPage();
 
         page.setting('userAgent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36');
@@ -146,8 +164,14 @@ module.exports.fetchChapterContent =  async (chapterInfo) => {
 }
 
 module.exports.initBook = async (bookId) => {
+    beginingInitBookMap[bookId] = true;
+
     let {chapterList, bookName, bookImage} = await module.exports.fetchBookData(bookId);
 
+    if (!bookName) {
+        return;
+    }
+    
     // 创建书籍
     try {
         await Book.add({
@@ -166,13 +190,14 @@ module.exports.initBook = async (bookId) => {
         }
     }
 
-    fetchChapterMpLimit(bookName, chapterList);
+    fetchChapterMpLimit(bookName, chapterList, true);
     
 }
 
-const fetchChapterMpLimit = async (bookName, chapterList) => {
+const fetchChapterMpLimit = async (bookName, chapterList, isBookInit) => {
     // 抓取并保存章节
     let count = 0;
+    let bookId;
     async.mapLimit(chapterList, 5, async function (item, callback) {
         try {
             let dbExistChapter = await Chapter.findOne({id: item.id});
@@ -188,6 +213,8 @@ const fetchChapterMpLimit = async (bookName, chapterList) => {
                 console.error(`biquge[book=${bookName}] 抓取章节${item.link}失败：获取dom失败`);
                 return;
             }
+
+            bookId = chapter.bookId;
 
             await Chapter.add(chapter);
             
@@ -212,6 +239,10 @@ const fetchChapterMpLimit = async (bookName, chapterList) => {
         }
 
     }, function (err, result) {
+        if (isBookInit) {
+            beginingInitBookMap[bookId] = false;
+            doCheckTask();
+        }
         if (err) {
             console.error(err);
         }
@@ -222,30 +253,32 @@ const fetchChapterMpLimit = async (bookName, chapterList) => {
 var intervalIds = {};
 
 module.exports.checkBookChapterUpdate = async (bookId) => {
-    let {chapterList, bookName, bookImage} = await module.exports.fetchBookData(bookId);
+    if (!beginingInitBookMap[bookId]) {
+        let {chapterList, bookName, bookImage} = await module.exports.fetchBookData(bookId);
 
-    let dbLastChapter = await Chapter.find({
-        book_id: bookId,
-    }).sort({id: -1}).limit(1);
+        let dbLastChapter = await Chapter.find({
+            book_id: bookId,
+        }).sort({id: -1}).limit(1);
 
-    if (dbLastChapter && dbLastChapter.length) {
-        dbLastChapter = dbLastChapter[0];
+        if (dbLastChapter && dbLastChapter.length) {
+            dbLastChapter = dbLastChapter[0];
+        }
+
+        let newChapters = chapterList && chapterList.filter(item => item.id > dbLastChapter.id) || [];
+
+        if (!newChapters.length) {
+            console.log(`biquge[book=${bookName}]`.magenta, `暂无章节更新！`.cyan );
+            return;
+        }
+
+        console.log(`biquge[book=${bookName}]`.magenta, `有新章节更新：${JSON.stringify(newChapters)}`.green );
+        fetchChapterMpLimit(bookName, newChapters);
     }
 
-    let newChapters = chapterList && chapterList.filter(item => item.id > dbLastChapter.id) || [];
-
-    if (!newChapters.length) {
-        console.log(`biquge[book=${bookName}]`.magenta, `暂无章节更新！`.cyan );
-        return;
-    }
-
-    console.log(`biquge[book=${bookName}]`.magenta, `有新章节更新：${JSON.stringify(newChapters)}`.green );
-    fetchChapterMpLimit(bookName, newChapters);
-
-    intervalIds[bookId] && clearInterval(intervalIds[bookId]);
-    intervalIds[bookId] = setInterval(() => {
-        module.exports.checkBookChapterUpdate(bookId);
-    }, 10 * 60 * 1000);
+    // intervalIds[bookId] && clearInterval(intervalIds[bookId]);
+    // intervalIds[bookId] = setInterval(() => {
+    //     module.exports.checkBookChapterUpdate(bookId);
+    // }, 10 * 60 * 1000);
 }
 
 const doCheckTask = async () => {
@@ -253,9 +286,10 @@ const doCheckTask = async () => {
 
     for (var i = 0, len = books.length; i < len; i++) {
         (function(bookId) {
-            setTimeout(() => {
+            intervalIds[bookId] && clearInterval(intervalIds[bookId]);
+            intervalIds[bookId] = setInterval(() => {
                 module.exports.checkBookChapterUpdate(bookId);
-            }, 5 * 60 * 1000 * i);
+            }, (i + 5) * 60 * 1000 * (i + 1));
         })(books[i].id);
     }
 }

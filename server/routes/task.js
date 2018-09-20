@@ -1,9 +1,14 @@
 var biqugeTask = require('../task/biquge');
 
 async function biquegeBookInit(req, res, next) {
+
+    if (!req.body.bookId) {
+        res.status(403).send('forbidon');
+        return;
+    }
     
     // biqugeTask.initBook('746');
-    biqugeTask.initBook(req.query.bookId);
+    biqugeTask.initBook(req.body.bookId);
     res.status(200).send('ok');
 }
 
@@ -18,5 +23,5 @@ async function biquegeBookInit(req, res, next) {
 module.exports = [
 
     
-    ['GET', '/task/biquge/book/init', biquegeBookInit],
+    ['POST', '/api/task/biquge/book/init', biquegeBookInit],
 ];

@@ -12,6 +12,14 @@
       <text>{{ item.name }}</text>
     </view>
   </view>
+  <view class="bottom-bar">
+      <view class="tip">添加书籍（暂支持抓取【笔趣阁】来源）：</view>
+      <view class="fetch-wrap">
+        <input placeholder="输入书籍url或书籍id" value="{{inputValue}}" bindinput="bindKeyInput"/>
+        <view @tap="handleSendBtnClick" class="send-btn">添加书籍</view>
+      </view>
+  </view>
+  <toast />
 </view>
 
 </template>
@@ -28,6 +36,7 @@ export default class Shelf extends wepy.page {
         navigationBarBackgroundColor: "#fff",
         navigationBarTextStyle: "black",
         backgroundColor: '#f8f8f8',
+        enablePullDownRefresh: true,
     }
 
     components = {
@@ -37,10 +46,22 @@ export default class Shelf extends wepy.page {
     data = {
         books: [],
         mode: false,
+        inputValue: '',
+        isAddBookSubmiting: false,
     }
 
     onLoad(options){
         this.fetchBookList();
+    }
+
+    async onPullDownRefresh() {
+        //   wepy.stopPullDownRefresh();
+        wepy.showNavigationBarLoading()
+        await this.fetchBookList();
+
+        wepy.hideNavigationBarLoading();
+
+        wepy.stopPullDownRefresh();
     }
 
     async fetchBookList() {
@@ -86,7 +107,59 @@ export default class Shelf extends wepy.page {
                 id: bookId,
                 name: bookName,
             });
-       }
+        },
+        bindKeyInput: function(e) {
+            this.inputValue = e.detail.value;
+            this.$apply();
+        },
+        async handleSendBtnClick() {
+            if (this.isAddBookSubmiting) {
+                return;
+            }
+
+            if (!this.inputValue.length) {
+                this.toast('请输入要抓取的书籍url或ID');
+                return;
+            }
+
+            let bookId;
+            let matchs = this.inputValue.match(/(\d+)(?=(\/?))/);
+            if (matchs && matchs.length > 1) {
+                bookId = matchs[1];
+            }
+
+            if (!bookId) {
+                this.toast('输入有误！');
+                return;
+            }
+
+            this.isAddBookSubmiting = true;
+
+            wepy.showLoading({
+                title: '提交中'
+            });
+        
+            try {
+                let res = await request({
+                    url: '/api/task/biquge/book/init',
+                    data: {
+                        bookId: bookId,
+                    }
+                });
+
+                wepy.hideLoading();
+                this.isAddBookSubmiting = false;
+                this.toast('请求成功！稍后请刷新页面查看');
+                this.$apply();
+
+            } catch(error) {
+                console.error(error);
+                wepy.hideLoading();
+                this.isAddBookSubmiting = false;
+                this.$apply();
+                return;
+            }
+        }
     }
 }
 
