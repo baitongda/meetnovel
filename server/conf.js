@@ -11,7 +11,7 @@ var root = path.resolve(__dirname, '../dist/'),
         root: root,
         global: global,
         favicon: favicon,
-        db: 'mongodb://meetnovel:meetnovel123@127.0.0.1:27017,127.0.0.1:27018,127.0.0.1:27019/meetnovel'
+        db: 'mongodb://meetnovel:meetnovel123@127.0.0.1:27017,127.0.0.1:27018,127.0.0.1:27019/meetnovel?replicaSet=yunmi1'
     };
 
 /**
