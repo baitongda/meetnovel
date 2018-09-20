@@ -4,7 +4,7 @@ module.exports = {
     clientVer: '1.0.0',
 
     // 接口前缀
-    apiPrefix: 'http://172.16.0.114:5005',
+    apiPrefix: 'https://meetnovel.coolplus.me',
 
     // 接口签名key
     apiKey: '',
