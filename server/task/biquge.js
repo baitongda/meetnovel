@@ -265,7 +265,7 @@ module.exports.checkBookChapterUpdate = async (bookId) => {
         let {chapterList, bookName, bookImage} = await module.exports.fetchBookData(bookId);
 
         let dbLastChapters = await Chapter.find({
-            book_id: bookId,
+            book_id: parseInt(bookId),
         }).sort({id: -1}).limit(5);
 
         let dbLastChapter;
@@ -275,10 +275,9 @@ module.exports.checkBookChapterUpdate = async (bookId) => {
 
         let extraFetchIds = [];
         dbLastChapters && dbLastChapters.map(item => extraFetchIds.push(item.id));
+        
 
         let newChapters = chapterList && chapterList.filter(item => (item.id > (dbLastChapter && dbLastChapter.id || 0)) || extraFetchIds.indexOf(item.id >= 0)) || [];
-
-        // newChapters = newChapters.concat((dbLastChapters || []).slice(1))
 
         if (!newChapters.length) {
             console.log(`biquge[book=${bookName}]`.magenta, `暂无章节更新！`.cyan );
@@ -303,7 +302,7 @@ const doCheckTask = async () => {
             intervalIds[bookId] && clearInterval(intervalIds[bookId]);
             intervalIds[bookId] = setInterval(() => {
                 module.exports.checkBookChapterUpdate(bookId);
-            }, (i + 3) * 60 * 1000 * (i + 1));
+            }, (i + 5) * 60 * 1000 * (i + 1));
         })(books[i].id);
     }
 }
