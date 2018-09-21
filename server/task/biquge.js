@@ -309,7 +309,7 @@ const doCheckTask = async () => {
             intervalIds[bookId] && clearInterval(intervalIds[bookId]);
             intervalIds[bookId] = setInterval(() => {
                 module.exports.checkBookChapterUpdate(bookId);
-            }, (i + 3) * 60 * 1000 * (i + 1));
+            }, 60 * 1000 * (2 * i + 1));
             // }, 3000);
         })(books[i].id);
     }
