@@ -276,7 +276,7 @@ module.exports.checkBookChapterUpdate = async (bookId) => {
         let extraFetchIds = [];
         dbLastChapters && dbLastChapters.map(item => extraFetchIds.push(item.id));
 
-        let newChapters = chapterList && chapterList.filter(item => item.id > (dbLastChapter && dbLastChapter.id || 0) || extraFetchIds.indexOf(item.id >= 0)) || [];
+        let newChapters = chapterList && chapterList.filter(item => (item.id > (dbLastChapter && dbLastChapter.id || 0)) || extraFetchIds.indexOf(item.id >= 0)) || [];
 
         // newChapters = newChapters.concat((dbLastChapters || []).slice(1))
 
