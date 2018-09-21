@@ -271,7 +271,7 @@ module.exports.checkBookChapterUpdate = async (bookId) => {
 
         let dbLastChapters = await Chapter.find({
             book_id: parseInt(bookId),
-        }).sort({id: -1}).limit(8);
+        }).sort({id: -1}).limit(4);
 
         let dbLastChapter;
         if (dbLastChapters && dbLastChapters.length) {
