@@ -202,7 +202,7 @@ const fetchChapterMpLimit = async (bookName, chapterList, isBookInit) => {
         try {
             let dbExistChapter = await Chapter.findOne({id: item.id});
 
-            if (dbExistChapter && dbExistChapter.id) {
+            if (dbExistChapter && dbExistChapter.id && !item.content) {
                 console.log(`biquge[book=${bookName}]`.magenta, `章节${item.link}已抓取过，不重复保存`.gray);
                 return;
             }
@@ -216,10 +216,18 @@ const fetchChapterMpLimit = async (bookName, chapterList, isBookInit) => {
 
             bookId = chapter.bookId;
 
-            await Chapter.add(chapter);
-            
             count++;
-            console.log(`biquge[book=${bookName}]`.magenta, `抓取${item.link}完成，已完成${count}章节，总章节数${chapterList.length}`.cyan);
+            
+            // 新章节
+            if (!item.content) {
+                await Chapter.add(chapter);
+                console.log(`biquge[book=${bookName}]`.magenta, `抓取${item.link}完成，已完成${count}章节，总章节数${chapterList.length}`.cyan);
+            // 旧章节，则更新
+            } else {
+                dbExistChapter.content = chapter.content;
+                await dbExistChapter.save();
+                console.log(`biquge[book=${bookName}]`.magenta, `抓取${item.link}完成，该章节已更新内容！已完成${count}章节，总章节数${chapterList.length}`.cyan);
+            }
 
             let delay = parseInt((Math.random() * 10000000) % 2000, 10);
             setTimeout(() => {
@@ -256,22 +264,25 @@ module.exports.checkBookChapterUpdate = async (bookId) => {
     if (!beginingInitBookMap[bookId]) {
         let {chapterList, bookName, bookImage} = await module.exports.fetchBookData(bookId);
 
-        let dbLastChapter = await Chapter.find({
+        let dbLastChapters = await Chapter.find({
             book_id: bookId,
-        }).sort({id: -1}).limit(1);
+        }).sort({id: -1}).limit(5);
 
-        if (dbLastChapter && dbLastChapter.length) {
-            dbLastChapter = dbLastChapter[0];
+        let dbLastChapter;
+        if (dbLastChapters && dbLastChapters.length) {
+            dbLastChapter = dbLastChapters[0];
         }
 
-        let newChapters = chapterList && chapterList.filter(item => item.id > dbLastChapter.id) || [];
+        let newChapters = chapterList && chapterList.filter(item => item.id > (dbLastChapter && dbLastChapter.id || 0)) || [];
+
+        newChapters = newChapters.concat((dbLastChapters || []).slice(1))
 
         if (!newChapters.length) {
             console.log(`biquge[book=${bookName}]`.magenta, `暂无章节更新！`.cyan );
             return;
         }
 
-        console.log(`biquge[book=${bookName}]`.magenta, `有新章节更新：${JSON.stringify(newChapters)}`.green );
+        console.log(`biquge[book=${bookName}]`.magenta, `有章节更新：${JSON.stringify(newChapters)}`.green );
         fetchChapterMpLimit(bookName, newChapters);
     }
 
