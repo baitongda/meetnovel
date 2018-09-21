@@ -304,7 +304,7 @@ module.exports.checkBookChapterUpdate = async (bookId) => {
 const doCheckTask = async () => {
     let books = await Book.find({});
 
-    for (var i = 0, len = books.length; i < 1; i++) {
+    for (var i = 0, len = books.length; i < len; i++) {
         (function(bookId) {
             intervalIds[bookId] && clearInterval(intervalIds[bookId]);
             intervalIds[bookId] = setInterval(() => {
