@@ -125,6 +125,11 @@ module.exports.fetchChapterContent =  async (chapterInfo) => {
         await page.on('onResourceRequested',function(requestData) {
             // console.info('Requesting',requestData.url);
         });
+
+        if (!chapterInfo.link && chapterInfo.id && chapterInfo.book_id) {
+            chapterInfo.link = `https://www.qu.la/book/${chapterInfo.book_id}/${chapterInfo.id}.html`;
+        }
+
         console.log(`biquge[bookId=${chapterInfo.bookId}]`.magenta, `正在抓取章节${chapterInfo.link}/`.cyan)
         let status = await page.open(chapterInfo.link);
         var chapter;
