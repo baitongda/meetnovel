@@ -266,7 +266,7 @@ module.exports.checkBookChapterUpdate = async (bookId) => {
 
         let dbLastChapters = await Chapter.find({
             book_id: parseInt(bookId),
-        }).sort({id: -1}).limit(5);
+        }).sort({id: -1}).limit(3);
 
         let dbLastChapter;
         if (dbLastChapters && dbLastChapters.length) {
@@ -277,14 +277,16 @@ module.exports.checkBookChapterUpdate = async (bookId) => {
         dbLastChapters && dbLastChapters.map(item => extraFetchIds.push(item.id));
         
 
-        let newChapters = chapterList && chapterList.filter(item => (parseInt(item.id) > (dbLastChapter && dbLastChapter.id || 0)) || extraFetchIds.indexOf(parseInt(item.id)) >= 0) || [];
+        let newChapters = chapterList && chapterList.filter(item => (parseInt(item.id) > (dbLastChapter && dbLastChapter.id || 0))) || [];
+
+        newChapters = newChapters.concat(dbLastChapters);
 
         if (!newChapters.length) {
             console.log(`biquge[book=${bookName}]`.magenta, `暂无章节更新！`.cyan );
             return;
         }
 
-        console.log(`biquge[book=${bookName}]`.magenta, `有章节更新：${JSON.stringify(newChapters)}`.green );
+        console.log(`biquge[book=${bookName}]`.magenta, `即将更新章节数：${newChapters.length - dbLastChapters.length}`.green );
         fetchChapterMpLimit(bookName, newChapters);
     }
 
