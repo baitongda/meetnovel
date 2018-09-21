@@ -130,7 +130,7 @@ module.exports.fetchChapterContent =  async (chapterInfo) => {
             chapterInfo.link = `https://www.qu.la/book/${chapterInfo.book_id}/${chapterInfo.id}.html`;
         }
 
-        console.log(`biquge[bookId=${chapterInfo.bookId}]`.magenta, `正在抓取章节${chapterInfo.link}/`.cyan)
+        console.log(`biquge[bookId=${chapterInfo.bookId || chapterInfo.book_id}]`.magenta, `正在抓取章节${chapterInfo.link}/`.cyan)
         let status = await page.open(chapterInfo.link);
         var chapter;
         if(status === 'success'){
@@ -149,7 +149,7 @@ module.exports.fetchChapterContent =  async (chapterInfo) => {
             if (result && result.title && result.content) {
                 chapter = {
                     id: chapterInfo.id,
-                    bookId: chapterInfo.bookId,
+                    bookId: chapterInfo.bookId || chapterInfo.book_id,
                     name: result.title,
                     content: puer(result.content),
                 }
