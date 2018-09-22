@@ -1,7 +1,7 @@
 
 var async = require('async');
 
-var pageQuery = function (page, pageSize, Model, populate, queryParams, sortParams, callback) {
+var pageQuery = function (page, pageSize, Model, populate, queryParams, sortParams, callback, otherParams) {
     var start = (page - 1) * pageSize;
     var $page = {
         pageNumber: page
@@ -13,7 +13,7 @@ var pageQuery = function (page, pageSize, Model, populate, queryParams, sortPara
             });
         },
         records: function (done) {   // 查询一页的记录
-            Model.find(queryParams).skip(start).limit(pageSize).populate(populate).sort(sortParams).exec(function (err, doc) {
+            Model.find(queryParams, otherParams || {}).skip(start).limit(pageSize).populate(populate).sort(sortParams).exec(function (err, doc) {
                 done(err, doc);
             });
         }

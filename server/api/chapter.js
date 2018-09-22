@@ -22,7 +22,7 @@ var chapterList = (req, res, next) => {
 
     var Chapter = mongoose.model('Chapter');
 
-    pageQuery(page, limit, Chapter, '-content', {
+    pageQuery(page, limit, Chapter, '', {
         book_id: bookId,
     }, {
         id: sortMode,
@@ -35,7 +35,7 @@ var chapterList = (req, res, next) => {
                 pageCount: $page.pageCount
             })
         }
-    });
+    }, {content: 0});
 }
 
 /**
