@@ -28,6 +28,8 @@
 import wepy from 'wepy'
 import request from '../components/request'
 
+import { getStorageSync, setStorageSync } from '../components/storage';
+
 import Toast from '../components/toast'
 
 export default class Shelf extends wepy.page {
@@ -110,10 +112,19 @@ export default class Shelf extends wepy.page {
             let bookId = e.target.dataset.bookId;
             let bookName = e.target.dataset.bookName;
 
-            this.$navigate('/pages/chapter-list', {
-                id: bookId,
-                name: bookName,
-            });
+            let recentChapterId = getStorageSync(`current_chapter_${bookId}`);
+
+            if (!recentChapterId) {
+                this.$navigate('/pages/chapter-list', {
+                    id: bookId,
+                    name: bookName,
+                });
+            } else {
+                this.$navigate('/pages/chapter', {
+                    id: recentChapterId,
+                    bookName: bookName,
+                })
+            }
         },
         bindKeyInput: function(e) {
             this.inputValue = e.detail.value;

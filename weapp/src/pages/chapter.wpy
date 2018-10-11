@@ -45,6 +45,7 @@ export default class Chapter extends wepy.page {
   };
 
   data = {
+    scrollTop: 0,
     chapter: {},
     chapterId: '',
     bookName: '',
@@ -54,7 +55,7 @@ export default class Chapter extends wepy.page {
     nextDisabled: false,
   };
 
-  onLoad(options) {
+  async onLoad(options) {
 
     this.chapterId = options.id;
     this.bookName = options.bookName;
@@ -73,7 +74,34 @@ export default class Chapter extends wepy.page {
         title: this.bookName
     });
 
-    this.fetchChapterDetail();
+    await this.fetchChapterDetail();
+
+    setTimeout(() => {
+      if (this.chapter) {
+        this.initChapterFlag();
+        this.initPageScroll();
+      }
+    }, 300);
+  }
+
+  onPageScroll(data) {
+    setStorageSync(`scrollto_${this.chapterId}`, data.scrollTop);
+  }
+
+  initChapterFlag() {
+    setStorageSync(`current_chapter_${this.chapter.book_id}`, this.chapterId)
+  }
+
+  initPageScroll() {
+    let pageScrollTo = getStorageSync(`scrollto_${this.chapterId}`);
+
+    if (pageScrollTo) {
+      if (wx.pageScrollTo) {//判断这个方法是否可用
+        wx.pageScrollTo({
+          scrollTop: pageScrollTo
+        })
+      }
+    }
   }
 
   async fetchChapterDetail() {
@@ -128,9 +156,18 @@ export default class Chapter extends wepy.page {
       });
     },
     toMulu() {
-      wepy.navigateBack({
-        delta: 1
-      });
+      let historys = getCurrentPages();
+
+      if (historys.length - 2 >= 0 && historys[historys.length - 2].route === 'pages/chapter-list') {
+        wepy.navigateBack({
+          delta: 1
+        });
+      } else {
+        this.$navigate('/pages/chapter-list', {
+            id: this.chapter.book_id,
+            name: this.bookName,
+        });
+      }
     },
     async prevChapter() {
         wepy.showLoading({
