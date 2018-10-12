@@ -55,7 +55,7 @@ var chapterInfo = async (req, res, next) => {
             record: chapter,
         })
     } catch(err) {
-        next(error);
+        next(err);
     }
 }
 
@@ -70,7 +70,7 @@ var chapterNext = async (req, res, next) => {
             record: chapter && chapter.length && chapter[0] || null,
         })
     } catch(err) {
-        next(error);
+        next(err);
     }
 }
 
@@ -86,7 +86,7 @@ var chapterPrev = async (req, res, next) => {
             record: chapter && chapter.length && chapter[0] || null,
         })
     } catch(err) {
-        next(error);
+        next(err);
     }
 }
 
