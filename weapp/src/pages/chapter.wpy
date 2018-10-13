@@ -156,18 +156,22 @@ export default class Chapter extends wepy.page {
       });
     },
     toMulu() {
-      let historys = getCurrentPages();
 
-      if (historys.length - 2 >= 0 && historys[historys.length - 2].route === 'pages/chapter-list') {
-        wepy.navigateBack({
-          delta: 1
-        });
-      } else {
-        this.$navigate('/pages/chapter-list', {
-            id: this.chapter.book_id,
-            name: this.bookName,
-        });
-      }
+      wepy.navigateBack({
+        delta: 1
+      });
+      // let historys = getCurrentPages();
+
+      // if (historys.length - 2 >= 0 && historys[historys.length - 2].route === 'pages/chapter-list') {
+      //   wepy.navigateBack({
+      //     delta: 1
+      //   });
+      // } else {
+      //   this.$navigate('/pages/chapter-list', {
+      //       id: this.chapter.book_id,
+      //       name: this.bookName,
+      //   });
+      // }
     },
     async prevChapter() {
         wepy.showLoading({

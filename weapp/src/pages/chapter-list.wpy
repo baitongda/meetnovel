@@ -45,6 +45,8 @@ import request from '../components/request'
 
 import Toast from '../components/toast'
 
+import { getStorageSync, setStorageSync } from '../components/storage';
+
 export default class ChapterList extends wepy.page {
     config = {
         navigationBarTitleText: "章节列表",
@@ -73,6 +75,15 @@ export default class ChapterList extends wepy.page {
         this.bookId = options.id;
         this.bookName = options.name;
         this.$apply();
+
+        let recentChapterId = getStorageSync(`current_chapter_${this.bookId}`);
+
+        if (recentChapterId) {
+            this.$navigate('/pages/chapter', {
+                id: recentChapterId,
+                bookName: this.bookName,
+            })
+        }
 
         this.fetchChapterList();
     }
