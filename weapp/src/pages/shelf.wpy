@@ -50,6 +50,7 @@ export default class Shelf extends wepy.page {
         mode: false,
         inputValue: '',
         isAddBookSubmiting: false,
+        isDeletingBook: false,
     }
 
     onLoad(options){
@@ -130,6 +131,44 @@ export default class Shelf extends wepy.page {
                 id: bookId,
                 name: bookName,
             });
+        },
+        async delBook(e) {
+            let bookId = e.target.dataset.bookId;
+
+            if (this.isDeletingBook) {
+                return;
+            }
+
+            this.isDeletingBook = true;
+            wepy.showLoading({
+                title: '提交中'
+            });
+
+            try {
+                let res = await request({
+                    url: '/api/book/delete',
+                    data: {
+                        bookId: bookId,
+                    }
+                });
+
+                wepy.hideLoading();
+                this.isDeletingBook = false;
+                
+                if (res && res.state && res.state.code === 0) {
+                    this.toast('删除成功！');
+                    this.books = this.books.filter(book => String(book.id) === String(bookId));
+                }
+                this.$apply();
+
+            } catch(error) {
+                console.error(error);
+                wepy.hideLoading();
+                this.isDeletingBook = false;
+                this.$apply();
+                return;
+            }
+
         },
         bindKeyInput: function(e) {
             this.inputValue = e.detail.value;

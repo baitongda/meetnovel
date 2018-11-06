@@ -105,6 +105,15 @@ module.exports.fetchBookData =  async (bookId) => {
 }
 
 /**
+ * 搜索书籍或作者
+ * https://sou.xanbhx.com/search?q=%E5%A4%A7%E5%93%A5&s=920895234054625192&t=m&siteid=qula
+ * @param {String} nameOrAuthor 
+ */
+module.exports.searchBook = async (nameOrAuthor) => {
+
+}
+
+/**
  * 根据抓取的章节数据抓取书籍章节内容
  * chapterInfo = {
  *  id: '10582911',

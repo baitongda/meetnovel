@@ -32,6 +32,36 @@ var bookList = (req, res, next) => {
     });
 }
 
+/**
+ * 书籍删除
+ * @param  {[type]}   req  [description]
+ * @param  {[type]}   res  [description]
+ * @param  {Function} next [description]
+ * @return {[type]}        [description]
+ */
+var bookDelete = async (req, res, next) => {
+    var bookId = req.body.bookId;
+
+    try {
+        await Book.remove({
+            id: parseInt(bookId)
+        });
+
+        await Chapter.remove({
+            book_id: parseInt(bookId),
+        });
+
+        resProcessor.jsonp(req, res, {
+            state: {
+                code: 0,
+                msg: 'success'
+            }
+        })
+    } catch(err) {
+        next(err);
+    }
+}
+
 
 /**
  * routes配置，配置格式如下：
@@ -43,5 +73,6 @@ var bookList = (req, res, next) => {
  */
 module.exports = [
     // 书籍列表
-    ['POST', '/api/book/list', bookList]
+    ['POST', '/api/book/list', bookList],
+    ['POST', '/api/book/delete', bookDelete],
 ];
