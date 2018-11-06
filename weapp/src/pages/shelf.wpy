@@ -154,10 +154,10 @@ export default class Shelf extends wepy.page {
 
                 wepy.hideLoading();
                 this.isDeletingBook = false;
-                
+
                 if (res && res.state && res.state.code === 0) {
                     this.toast('删除成功！');
-                    this.books = this.books.filter(book => String(book.id) === String(bookId));
+                    this.books = this.books.filter(book => String(book.id) !== String(bookId));
                 }
                 this.$apply();
 
